@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Credit Journey</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        #game-container {
+            background-color: #f4f4f4;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        #career-selection, #event-container {
+            margin-bottom: 20px;
+        }
+        #status-bar {
+            display: flex;
+            justify-content: space-between;
+            background-color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #result {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Life Credit Journey</h1>
+    <div id="game-container">
+       <div id="career-selection">
+            <h2>Select Your Career</h2>
+            <div id="career-options"></div>
+        </div>
+        <div id="status-bar">
+            <span>Credit Score: <span id="credit-score">0</span></span>
+            <span>Cash: $<span id="cash">1000</span></span>
+            <span>Debt: $<span id="debt">0</span></span>
+            <span>Event: <span id="event-counter">0</span>/20</span>
+        </div>
+        <div id="event-container">
+            <h2>Current Event</h2>
+            <p id="event-description"></p>
+            <div id="event-choices"></div>
+        </div>
+        <div id="result"></div>
+    </div>
+ 
+    <script>
+        class LifeCreditJourney {
+            constructor() {
+                this.careers = [
+                    { name: "High School Teacher", education: "College", salary: 50000 },
+                    { name: "Software Developer", education: "College", salary: 80000 },
+                    { name: "Electrician", education: "Trade School", salary: 55000 },
+                    { name: "Retail Sales Associate", education: "No advanced training", salary: 25000 },
+                    { name: "Doctor", education: "Advanced Degree", salary: 200000 },
+                    { name: "Plumber", education: "Trade School", salary: 52000 },
+                    { name: "Waiter", education: "No advanced training", salary: 22000 },
+                    { name: "Lawyer", education: "Advanced Degree", salary: 120000 },
+                    { name: "Graphic Designer", education: "College", salary: 45000 },
+                    { name: "Construction Worker", education: "No advanced training", salary: 35000 }
+                ];
+               
+                this.lifeEvents = [
+                    {
+                        description: "Your car breaks down. Repair cost: $500",
+                        choices: [
+                            { text: "Pay with cash", creditScoreImpact: 0, cashImpact: -500 },
+                            { text: "Pay with credit card", creditScoreImpact: -5, debtImpact: 500 }
+                        ]
+                    },
+                    {
+                        description: "You're invited to a destination wedding. Cost: $1000",
+                        choices: [
+                            { text: "Decline the invitation", creditScoreImpact: 0, cashImpact: 0 },
+                            { text: "Attend and pay with credit card", creditScoreImpact: -10, debtImpact: 1000 },
+                            { text: "Attend and pay with savings", creditScoreImpact: 0, cashImpact: -1000 }
+                        ]
+                    },
+                    {
+                        description: "You find a great deal on a new TV. Cost: $800",
+                        choices: [
+                            { text: "Pass on the deal", creditScoreImpact: 0, cashImpact: 0 },
+                            { text: "Buy it with credit card", creditScoreImpact: -8, debtImpact: 800 },
+                            { text: "Save up and buy later", creditScoreImpact: 5, cashImpact: 0 }
+                        ]
+                    },
+                    {
+                        description: "Your credit card company offers a credit limit increase",
+                        choices: [
+                           { text: "Accept the increase", creditScoreImpact: 10, creditLimitIncrease: 1000 },
+                            { text: "Decline the increase", creditScoreImpact: 0, creditLimitIncrease: 0 }
+                        ]
+                    },
+                    {
+                        description: "You have an opportunity to refinance your student loans",
+                        choices: [
+                            { text: "Refinance to lower interest rate", creditScoreImpact: 15, debtImpact: -1000 },
+                            { text: "Keep current loans", creditScoreImpact: 0, debtImpact: 0 }
+                        ]
+                    },
+                    // Add more life events here to reach a minimum of 20
+                ];
+               
+                this.player = {
+                    career: null,
+                    salary: 0,
+                    creditScore: 0,
+                    cash: 1000,
+                    debt: 0,
+                    creditLimit: 2000
+                };
+               
+                this.currentEvent = 0;
+                this.gameLength = 20;
+            }
+           
+            startGame() {
+                this.displayCareers();
+            }
+           
+            displayCareers() {
+                const careerOptions = document.getElementById('career-options');
+                careerOptions.innerHTML = '';
+                this.careers.forEach((career, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = `${career.name} (${career.education}) - Salary: $${career.salary}`;
+                    button.onclick = () => this.selectCareer(index);
+                    careerOptions.appendChild(button);
+                });
+            }
+           
+            selectCareer(index) {
+                const selectedCareer = this.careers[index];
+                this.player.career = selectedCareer.name;
+                this.player.salary = selectedCareer.salary;
+                this.initializeFinances();
+                this.updateStatusBar();
+                this.playTurn();
+            }
+           
+            initializeFinances() {
+                this.player.creditScore = Math.floor(Math.random() * (800 - 300 + 1)) + 300;
+            }
+           
+            updateStatusBar() {
+                document.getElementById('credit-score').textContent = this.player.creditScore;
+                document.getElementById('cash').textContent = this.player.cash;
+                document.getElementById('debt').textContent = this.player.debt;
+                document.getElementById('event-counter').textContent = this.currentEvent;
+            }
+           
+            playTurn() {
+                if (this.currentEvent >= this.gameLength) {
+                    this.endGame();
+                    return;
+                }
+               
+                const event = this.lifeEvents[this.currentEvent % this.lifeEvents.length];
+                document.getElementById('event-description').textContent = event.description;
+               
+                const choicesContainer = document.getElementById('event-choices');
+                choicesContainer.innerHTML = '';
+                event.choices.forEach((choice, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = choice.text;
+                    button.onclick = () => this.processChoice(choice);
+                    choicesContainer.appendChild(button);
+                });
+               
+                this.currentEvent++;
+                this.updateStatusBar();
+            }
+           
+            processChoice(choice) {
+                this.player.creditScore += choice.creditScoreImpact;
+                this.player.cash += choice.cashImpact || 0;
+                this.player.debt += choice.debtImpact || 0;
+                if (choice.creditLimitIncrease) {
+                    this.player.creditLimit += choice.creditLimitIncrease;
+                }
+               
+                this.updateStatusBar();
+                this.playTurn();
+            }
+           
+            endGame() {
+                const finalScore = this.calculateFinalScore();
+                const resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = `
+                    <h2>Game Over!</h2>
+                    <p>Final Credit Score: ${this.player.creditScore}</p>
+                    <p>Final Cash: $${this.player.cash}</p>
+                    <p>Final Debt: $${this.player.debt}</p>
+                    <p>Final Score: ${finalScore}</p>
+                `;
+                document.getElementById('event-container').style.display = 'none';
+            }
+           
+            calculateFinalScore() {
+                return this.player.creditScore + (this.player.cash / 100) - (this.player.debt / 100);
+            }
+        }
+ 
+        const game = new LifeCreditJourney();
+        game.startGame();
+    </script>
+</body>
+</html>
